@@ -1,0 +1,83 @@
+
+import os
+
+DEBUG = <%= @debug ? "True" : "False" %>
+
+DATABASES = {
+    'default': {
+        'NAME': '<%= @database[:settings][:database] %>',
+        'ENGINE': 'django.db.backends.<%= @database[:settings][:adapter] %>',
+        'USER': '<%= @database[:settings][:username] %>',
+        'PASSWORD': '<%= @database[:settings][:password] %>',
+        'HOST': '<%= @database[:settings][:host] %>',
+        'PORT': '<%= @database[:settings][:port]  %>',
+    },
+}
+
+SITE_NAME="Viewshare"
+SITE_NAME_STATUS = ""
+
+MEDIA_ROOT = "<%= @root_path %>/shared/media/"
+STATIC_ROOT = "<%= @root_path %>/shared/static/"
+FILE_UPLOAD_PATH = "<%= @root_path %>/shared/upload"
+FILE_DOWNLOAD_NGINX_OPTIMIZATION=False
+
+COMPRESS_ROOT=STATIC_ROOT
+
+AKARA_URL_PREFIX='http://transformer.zepheira.com:8881'
+
+LOCAL_INSTALLED_APPS=("gunicorn",)
+
+SECRET_KEY = "<%= node[:viewshare][:secret_key] %>"
+
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_CSS_FILTERS=('compressor.filters.css_default.CssAbsoluteFilter', 'compressor.filters.cssmin.CSSMinFilter')
+COMPRESS_ENABLED=<%= @debug ? "False" : "True" %>
+COMPRESS_OFFLINE=<%= @debug ? "True" : "False" %>
+COMPRESS_STORAGE='compressor.storage.GzipCompressorFileStorage'
+
+<% if @email_settings %>
+EMAIL_DEBUG = DEBUG
+EMAIL_HOST = "<%= @email_settings["host"] %>"
+EMAIL_PORT = <%= @email_settings["port"] %>
+EMAIL_HOST_USER = "<%= @email_settings["host_user"] %>"
+EMAIL_HOST_PASSWORD = "<%= @email_settings["host_password"] %>"
+EMAIL_USE_TLS= <%= @email_settings["use_tls"] ? "True" : "False" %>
+
+DEFAULT_FROM_EMAIL="<%= @email_settings["default_from_email"] %>"
+<% end %>
+
+<% if not @debug -%>
+TEMPLATE_LOADERS = (
+    ('django.template.loaders.cached.Loader', (
+        'django.template.loaders.filesystem.Loader',
+        'django.template.loaders.app_directories.Loader',
+    )),
+)
+<% end -%>
+
+MIDDLEWARE_CLASSES = (
+    'django.middleware.gzip.GZipMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'pagination.middleware.PaginationMiddleware',
+    'django.middleware.transaction.TransactionMiddleware',
+    'reversion.middleware.RevisionMiddleware',
+    'cms.middleware.page.CurrentPageMiddleware',
+    'cms.middleware.user.CurrentUserMiddleware',
+    'cms.middleware.toolbar.ToolbarMiddleware',
+)
+
+<% if node[:memcached] -%>
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '<%= node[:memcached][:listen] == "0.0.0.0"? "127.0.0.1" : node[:memcached][:listen] %>:<%= node[:memcached][:port] %>',
+    }
+}
+
+SESSION_ENGINE="django.contrib.sessions.backends.cached_db"
+
+<% end -%>
