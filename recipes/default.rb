@@ -1,4 +1,5 @@
 application_name = "viewshare"
+app_node = node[application_name]
 
 ::Chef::Recipe.send(:include, Opscode::OpenSSL::Password)
 node.set_unless[application_name]["secret_key"] = "#{Array.new(4).fill {secure_password}.join}"
@@ -6,11 +7,13 @@ node.save unless Chef::Config[:solo]
 
 db_user = "root"
 db_passwd = node['mysql']['server_root_password']
+db_name = app_node['database_name']
 
 mysql_database 'viewshare' do
   connection ({:host => "localhost", :username => db_user, :password => db_passwd})
   action :create
 end
+
 django_packages = ["gunicorn"]
 
 if node[:memcached] then
@@ -19,52 +22,64 @@ end
 
 root_path = "/srv/#{application_name}"
 
+django_settings = {"root_path"=>root_path}
+
+if app_node["email_settings_bag"] && app_node["email_settings_item"] then
+    django_settings["email_settings"] = data_bag_item(app_node[:email_settings_bag], app_node[:email_settings_item])
+end
+
+
 application application_name do
     path root_path
     owner "nobody"
     group "nogroup"
-    repository node[application_name][:repository]
-    revision node[application_name][:revision]
-    #deploy_key data_bag_item("deploy", "viewshare")["deploy_key"]
+    repository app_node[:repository]
+    revision app_node[:revision]
+
     migrate true
-    packages ["csstidy", "git-core", "libpq-dev"]
+    packages ["csstidy", "git-core", "libevent-dev"]
 
     django do
-        requirements "requirements/deploy.txt"
+        requirements "requirements.txt"
         settings_template "settings.py.erb"
-        debug node[application_name][:debug]
-        collectstatic !node[application_name][:debug]
+        local_settings_file "viewshare_site_settings.py"
+        debug app_node[:debug]
+        collectstatic !app_node[:debug]
         packages django_packages
         database do
-            database "viewshare"
+            database db_name
             adapter "mysql"
             username db_user
             password db_passwd
             host "localhost"
         end
 
-        settings "root_path" => root_path
-        #    , "email_settings" => data_bag_item(node[application_name][:email_settings_bag], node[application_name][:email_settings_item])
+        settings django_settings
 
     end
 
     gunicorn do
         app_module :django
         host "127.0.0.1"
-        port node[application_name][:application_port]
-        worker_class "eventlet"
+        port app_node[:application_port]
+        worker_class "gevent"
         autostart true
 
-        #server_hooks :post_fork => "from psycogreen.eventlet.psyco_eventlet import make_psycopg_green; make_psycopg_green()"
+        #server_hooks :post_fork => "from psycogreen.gevent import patch_psycopg; patch_psycopg()"
     end
 
     nginx_load_balancer do
-        application_port node[application_name][:application_port]
+        application_port app_node[:application_port]
         template "nginx.conf.erb"
         static_files "/static" => "#{root_path}/shared/static",
                      "/media" => "#{root_path}/shared/media"
-        server_name node[application_name][:server_name]
-        port node[application_name][:port]
+        locations "/static/CACHE" => {"alias" => "#{root_path}/shared/static/CACHE",
+                                      "expires" => "max",
+                                      "gzip_static" => "on"},
+                  "/fileuploads" => {"alias" => "#{root_path}/shared/upload",
+                                     "internal" => nil}
+        server_name app_node[:server_name]
+        port app_node[:port]
     end
 end
 
@@ -74,4 +89,10 @@ end
 
 nginx_site "default" do
     enable false
+end
+
+if node[:recipes].include?("iptables")
+  iptables_rule application_name do
+    variables(:port => node[application_name][:port])
+  end
 end

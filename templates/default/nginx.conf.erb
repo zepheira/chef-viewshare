@@ -2,11 +2,12 @@ upstream <%= @resource.application.name %> {
   server localhost:<%= @resource.application_port %>;
 }
 
+<% server_array = @resource.server_name.is_a?(Array) ? @resource.server_name : [@resource.server_name] %>
 
 
 server {
   listen <%= @resource.port %>;
-  server_name <%= @resource.server_name.is_a?(Array) ? @resource.server_name.join(' ') : @resource.server_name %>;
+  server_name <%= server_array.join(' ') %>;
   client_max_body_size 4G;
 
   keepalive_timeout 5;
@@ -15,6 +16,15 @@ server {
   <% @resource.static_files.each do |url, path| %>
   location <%= url %> {
     alias <%= path %>;
+  }
+
+  <% end %>
+
+  <% @resource.locations.each do |url, props| %>
+  location <%= url %> {
+    <% props.each do |prop, value| %>
+    <%= prop %><% if value %> <%= value %><% end %>;
+    <% end %>
   }
   <% end %>
 
@@ -31,6 +41,27 @@ server {
     }
   }
 }
+
+server {
+  listen 80;
+  server_name recollection.zepheira.com;
+
+  location / {
+    rewrite ^ http://<%= server_array.first %>$request_uri? permanent;
+  }
+}
+
+<% server_array.each do |server_name| %>
+server {
+  listen 80;
+  server_name www.<%= server_name %>;
+
+
+  location / {
+    rewrite ^ http://<%= server_name %>$request_uri? permanent;
+  }
+}
+<% end %>
 
 server {
     listen  <%= @resource.port %>  default;

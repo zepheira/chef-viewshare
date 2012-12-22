@@ -11,7 +11,7 @@ The following cookbooks are direct dependencies:
  * python
  * application
  * application_python -- Requires the Zepheira fork at https://github.com/zepheira/application_python.git
- * application_nginx
+ * application_nginx -- Requires the Zepheira fork at https://github.com/zepheira/application_nginx.git
  * database
  * nginx
 

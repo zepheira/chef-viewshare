@@ -1,4 +1,4 @@
-
+<% app_node=node[:viewshare] %>
 import os
 
 DEBUG = <%= @debug ? "True" : "False" %>
@@ -20,15 +20,16 @@ SITE_NAME_STATUS = ""
 MEDIA_ROOT = "<%= @root_path %>/shared/media/"
 STATIC_ROOT = "<%= @root_path %>/shared/static/"
 FILE_UPLOAD_PATH = "<%= @root_path %>/shared/upload"
-FILE_DOWNLOAD_NGINX_OPTIMIZATION=False
+FILE_DOWNLOAD_NGINX_OPTIMIZATION=True
 
 COMPRESS_ROOT=STATIC_ROOT
 
-AKARA_URL_PREFIX='http://transformer.zepheira.com:8881'
+AKARA_URL_PREFIX='<%= app_node['akara_url'] %>'
 
 LOCAL_INSTALLED_APPS=("gunicorn",)
 
-SECRET_KEY = "<%= node[:viewshare][:secret_key] %>"
+
+SECRET_KEY = "<%= app_node[:secret_key] %>"
 
 COMPRESS_ROOT = STATIC_ROOT
 COMPRESS_CSS_FILTERS=('compressor.filters.css_default.CssAbsoluteFilter', 'compressor.filters.cssmin.CSSMinFilter')
@@ -37,6 +38,7 @@ COMPRESS_OFFLINE=<%= @debug ? "True" : "False" %>
 COMPRESS_STORAGE='compressor.storage.GzipCompressorFileStorage'
 
 <% if @email_settings %>
+EMAIL_CONFIRMATION_DAYS = 2
 EMAIL_DEBUG = DEBUG
 EMAIL_HOST = "<%= @email_settings["host"] %>"
 EMAIL_PORT = <%= @email_settings["port"] %>
@@ -44,7 +46,6 @@ EMAIL_HOST_USER = "<%= @email_settings["host_user"] %>"
 EMAIL_HOST_PASSWORD = "<%= @email_settings["host_password"] %>"
 EMAIL_USE_TLS= <%= @email_settings["use_tls"] ? "True" : "False" %>
 
-DEFAULT_FROM_EMAIL="<%= @email_settings["default_from_email"] %>"
 <% end %>
 
 <% if not @debug -%>
@@ -56,18 +57,8 @@ TEMPLATE_LOADERS = (
 )
 <% end -%>
 
-MIDDLEWARE_CLASSES = (
+LOCAL_PRE_MIDDLEWARE_CLASSES = (
     'django.middleware.gzip.GZipMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'pagination.middleware.PaginationMiddleware',
-    'django.middleware.transaction.TransactionMiddleware',
-    'reversion.middleware.RevisionMiddleware',
-    'cms.middleware.page.CurrentPageMiddleware',
-    'cms.middleware.user.CurrentUserMiddleware',
-    'cms.middleware.toolbar.ToolbarMiddleware',
 )
 
 <% if node[:memcached] -%>
@@ -81,3 +72,42 @@ CACHES = {
 SESSION_ENGINE="django.contrib.sessions.backends.cached_db"
 
 <% end -%>
+
+<%if app_node[:sentry] -%>
+LOCAL_INSTALLED_APPS += ("sentry.client",)
+SENTRY_REMOTE_URL = '<%= app_node[:sentry][:url] %>'
+SENTRY_KEY = '<%= app_node[:sentry][:key] %>'
+<%end%>
+
+<% if app_node[:redmine] -%>
+<% redmine = app_node[:redmine] %>
+REDMINE_URL = '<%= redmine["url"] %>'
+REDMINE_USER = '<%= redmine["user"] %>'
+REDMINE_USER_ID = '<%= redmine["user_id"] %>'
+REDMINE_PASSWORD = '<%= redmine["password"] %>'
+REDMINE_KEY = '<%= redmine["key"] %>'
+REDMINE_PROJECT_ID = '<%= redmine["project_id"] %>'
+
+SUPPORT_USER = '<%= redmine["support_user"] %>'
+
+<% end -%>
+
+<% if app_node[:uservoice] -%>
+<% uservoice = app_node[:uservoice] %>
+USERVOICE_SETTINGS = {
+   'API_KEY': "<%= uservoice["api_key"] %>",
+   'ACCOUNT_KEY':"<%= uservoice["account_key"] %>",
+   'HOST': "<%= uservoice["host"] %>",
+   'FORUM': "<%= uservoice["forum"] %>"
+}
+<% end -%>
+
+SITE_ID = '<%= app_node['site_id'] %>'
+SITE_NAME= '<%= app_node['site_name'] %>'
+SITE_NAME_STATUS = '<%= app_node['site_status'] %>'
+
+
+CONTACT_EMAIL = "<%= app_node["contact_email"] %>"
+USER_APPROVAL_EMAIL_LIST=("<%= app_node["user_approval_email"] %>",)
+DEFAULT_FROM_EMAIL = "<%= app_node["from_email"] %>"
+USER_REGISTRATION_FROM_EMAIL = "<%= app_node["user_registration_from_email"] %>"
