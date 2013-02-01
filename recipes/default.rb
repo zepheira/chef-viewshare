@@ -64,6 +64,8 @@ application application_name do
         port app_node[:application_port]
         worker_class "gevent"
         autostart true
+        timeout 600
+        max_requests 1500
 
         #server_hooks :post_fork => "from psycogreen.gevent import patch_psycopg; patch_psycopg()"
     end
@@ -81,6 +83,15 @@ application application_name do
         server_name app_node[:server_name]
         port app_node[:port]
     end
+end
+
+if app_node["auth_protect"] then
+  cookbook_file "#{node['nginx']['dir']}/conf.d/#{application_name}.htpass" do
+    source "htpasswd"
+    owner node['nginx']['user']
+    mode 00600
+    notifies :restart, resources(:service => "nginx")
+  end
 end
 
 nginx_site "000-default" do

@@ -38,4 +38,4 @@ default["viewshare"]["uservoice"] = nil
 
 default["viewshare"]["redmine"] = nil
 
-
+default["viewshare"]["auth_protect"] = false

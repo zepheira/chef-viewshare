@@ -38,6 +38,8 @@ Attributes
 
 - node["viewshare"]["revision"]: The revision to use.  Defaults to 'master'
 
+- node["viewshare"]["auth_protect"]: Boolean for whether to use HTTP Basic authentication to put up an obstacle over the viewshare deployment.  Credentials are supplied by `files/default/htpasswd`.  Defaults to false.
+
 Usage
 =====
 
