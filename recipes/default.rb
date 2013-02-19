@@ -14,6 +14,21 @@ mysql_database 'viewshare' do
   action :create
 end
 
+rabbitmq_vhost "/viewshare" do
+  action :add
+end
+
+rabbitmq_user "viewshare" do
+  password 'somepass'
+  action :add
+end
+
+rabbitmq_user "viewshare" do
+  vhost "/viewshare"
+  permissions "\".*\" \".*\" \".*\""
+  action :set_permissions
+end
+
 django_packages = ["gunicorn"]
 
 if node[:memcached] then
@@ -68,6 +83,14 @@ application application_name do
         max_requests 1500
 
         #server_hooks :post_fork => "from psycogreen.gevent import patch_psycopg; patch_psycopg()"
+    end
+
+    celery do
+      django true
+      celerybeat true
+      broker do
+        transport "amqplib"
+      end
     end
 
     nginx_load_balancer do
