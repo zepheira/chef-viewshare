@@ -9,7 +9,7 @@ db_user = "root"
 db_passwd = node['mysql']['server_root_password']
 db_name = app_node['database_name']
 
-mysql_database 'viewshare' do
+mysql_database db_name do
   connection ({:host => "localhost", :username => db_user, :password => db_passwd})
   action :create
 end
