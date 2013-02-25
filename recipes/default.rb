@@ -86,6 +86,7 @@ application application_name do
     end
 
     celery do
+      config "celeryconfig.py"
       django true
       celerybeat true
       broker do
