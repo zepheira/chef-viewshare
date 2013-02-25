@@ -18,12 +18,12 @@ rabbitmq_vhost "/viewshare" do
   action :add
 end
 
-rabbitmq_user "viewshare" do
-  password 'somepass'
+rabbitmq_user "viewshare_user" do
+  password app_node[:rabbitmq_user_pass]
   action :add
 end
 
-rabbitmq_user "viewshare" do
+rabbitmq_user "viewshare_user" do
   vhost "/viewshare"
   permissions "\".*\" \".*\" \".*\""
   action :set_permissions
