@@ -8,23 +8,26 @@ node.save unless Chef::Config[:solo]
 db_user = "root"
 db_passwd = node['mysql']['server_root_password']
 db_name = app_node['database_name']
+rabbitmq_user_name = "viewshare_user"
+rabbitmq_user_passwd = app_node[:rabbitmq_user_password]
+rabbitmq_vhost_name = "/viewshare"
 
 mysql_database db_name do
   connection ({:host => "localhost", :username => db_user, :password => db_passwd})
   action :create
 end
 
-rabbitmq_vhost "/viewshare" do
+rabbitmq_vhost rabbitmq_vhost_name do
   action :add
 end
 
-rabbitmq_user "viewshare_user" do
-  password app_node[:rabbitmq_user_pass]
+rabbitmq_user rabbitmq_user_name do
+  password rabbitmq_user_passwd
   action :add
 end
 
-rabbitmq_user "viewshare_user" do
-  vhost "/viewshare"
+rabbitmq_user rabbitmq_user_name do
+  vhost rabbitmq_vhost_name
   permissions "\".*\" \".*\" \".*\""
   action :set_permissions
 end
@@ -88,9 +91,11 @@ application application_name do
     celery do
       config "celeryconfig.py"
       django true
-      celerybeat true
       broker do
         transport "amqplib"
+        user rabbitmq_user_name
+        password rabbitmq_user_passwd
+        vhost rabbitmq_vhost_name
       end
     end
 
