@@ -6,9 +6,9 @@ default["viewshare"]["application_port"] = 8080
 
 default["viewshare"]["debug"] = false
 
-default["viewshare"]["email_settings_bag"] = "django_defaults"
+default["viewshare"]["email_settings_bag"] = nil
 
-default["viewshare"]["email_settings_item"] = "email_settings"
+default["viewshare"]["email_settings_item"] = nil
 
 default["viewshare"]["repository"] = "git://github.com/zepheira/viewshare_site.git"
 
