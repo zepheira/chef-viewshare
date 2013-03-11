@@ -14,7 +14,7 @@ server {
 
   <% if node[@resource.application.name]["auth_protect"] then -%>
   auth_basic "Restricted";
-  auth_basic_user_file <%= node['nginx']['dir'] %>/conf.d/<%= @resource.application.name %>.htpass
+  auth_basic_user_file <%= node['nginx']['dir'] %>/conf.d/<%= @resource.application.name %>.htpass;
   <% end -%>
 
   <% @resource.static_files.each do |url, path| %>
