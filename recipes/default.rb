@@ -1,9 +1,11 @@
 application_name = "viewshare"
-app_node = node[application_name]
 
 ::Chef::Recipe.send(:include, Opscode::OpenSSL::Password)
 node.set_unless[application_name]["secret_key"] = "#{Array.new(4).fill {secure_password}.join}"
+node.set_unless[application_name]["rabbitmq_user_password"] = secure_password
 node.save unless Chef::Config[:solo]
+
+app_node = node[application_name]
 
 db_user = "root"
 db_passwd = node['mysql']['server_root_password']
@@ -32,12 +34,6 @@ rabbitmq_user rabbitmq_user_name do
   action :set_permissions
 end
 
-django_packages = ["gunicorn"]
-
-if node[:memcached] then
-    django_packages.push("python-memcached")
-end
-
 root_path = "/srv/#{application_name}"
 
 django_settings = {"root_path"=>root_path}
@@ -63,7 +59,6 @@ application application_name do
         local_settings_file "viewshare_site_settings.py"
         debug app_node[:debug]
         collectstatic !app_node[:debug]
-        packages django_packages
         database do
             database db_name
             adapter "mysql"
@@ -93,6 +88,7 @@ application application_name do
       django true
       broker do
         transport "amqplib"
+        host "127.0.0.1"
         user rabbitmq_user_name
         password rabbitmq_user_passwd
         vhost rabbitmq_vhost_name
