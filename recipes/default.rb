@@ -87,7 +87,7 @@ application application_name do
       config "celeryconfig.py"
       django true
       broker do
-        transport "amqplib"
+        transport "amqp"
         host "127.0.0.1"
         user rabbitmq_user_name
         password rabbitmq_user_passwd
