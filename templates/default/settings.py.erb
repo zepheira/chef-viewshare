@@ -98,8 +98,20 @@ USERVOICE_SETTINGS = {
    'API_KEY': "<%= uservoice["api_key"] %>",
    'ACCOUNT_KEY':"<%= uservoice["account_key"] %>",
    'HOST': "<%= uservoice["host"] %>",
-   'FORUM': "<%= uservoice["forum"] %>"
+   'FORUM': "<%= uservoice["forum"] %>",
+   'SSO_KEY': "<%= uservoice["sso_key"] %>",
+
+   'support_queues': {
+       'ignored_fields': "Ignored Data",
+       'augmentation': "Augmentation",
+       'upload': "Data Load"
+   }
 }
+SUPPORT_BACKEND = "viewshare.apps.support.backends.uservoice.UservoiceSupportBackend"
+
+SUPPORT_USER = '<%= uservoice["support_user"] %>'
+
+
 <% end -%>
 
 SITE_ID = '<%= app_node['site_id'] %>'
@@ -111,3 +123,5 @@ CONTACT_EMAIL = "<%= app_node["contact_email"] %>"
 USER_APPROVAL_EMAIL_LIST=("<%= app_node["user_approval_email"] %>",)
 DEFAULT_FROM_EMAIL = "<%= app_node["from_email"] %>"
 USER_REGISTRATION_FROM_EMAIL = "<%= app_node["user_registration_from_email"] %>"
+
+CELERY_ALWAYS_EAGER = False
